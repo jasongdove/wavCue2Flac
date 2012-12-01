@@ -1,8 +1,7 @@
 import os
 import sys
-
-# call 'cuebreakpoints | shnsplit'
-# check for errors
+import shlex
+from subprocess import call
 
 # call cuetag
 # check for errors
@@ -10,6 +9,7 @@ import sys
 # programmatically rename by metadata (if possible)
 
 def find_command(name):
+    print('checking for %s' % name)
     for dir in os.environ['PATH'].split(':'):
         command = os.path.join(dir, name)
         if os.path.exists(command): return command
@@ -18,13 +18,25 @@ def print_usage():
     print('usage: wavCue2Flac albumPath')
 
 def find_cue_wav(path):
+    print('checking for cue/wav in %s' % path)
     for root, dirs, files in os.walk(path):
         for file in files:
             cue = os.path.abspath(os.path.join(root, file))
             if cue.endswith('.cue'):
-                wav = cue.replace('.cue', '.wav')
-                if os.path.exists(wav):
-                    return cue, wav
+                for ext in ['.wav', '.wv']:
+                    wav = cue.replace('.cue', ext)
+                    if os.path.exists(wav):
+                        return cue, wav
+
+def split_album(cue, wav):
+    print('splitting album with cuebreakpoints | shnsplit')
+    os.chdir(os.path.dirname(cue))
+    ret = call(
+        'cuebreakpoints %s | shnsplit -q -o "flac flac -s --best -o %%f -" %s' % (shlex.quote(cue), shlex.quote(wav)),
+        shell=True)
+    if ret != 0:
+        print('error calling cuebreakpoints/shnsplit', file=sys.stderr)
+        sys.exit(1)
 
 if len(sys.argv) != 2:
     print_usage()
@@ -60,5 +72,4 @@ if paths is None:
 cue = paths[0]
 wav = paths[1]
 
-print(cue)
-print(wav)
+split_album(cue, wav)
