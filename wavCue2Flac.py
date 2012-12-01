@@ -1,9 +1,9 @@
 import os
 import sys
 import shlex
+import glob
+from mutagen.flac import FLAC
 from subprocess import call
-
-# programmatically rename by metadata (if possible)
 
 def find_command(name):
     #print('checking for %s' % name)
@@ -43,6 +43,17 @@ def tag_tracks(cue, path):
         print('error calling cuetag', file=sys.stderr)
         sys.exit(1)
 
+def rename_tracks(path):
+    print('renaming tracks')
+    for name in glob.glob(os.path.join(path, 'split-track*.flac')):
+        track = FLAC(name)
+        title = track["TITLE"][0]
+        artist = track["ARTIST"][0]
+        num = track["TRACKNUMBER"][0]
+        newName = '{0} - {1} - {2}.flac'.format(num.zfill(2), artist, title)
+        newPath = os.path.join(path, newName)
+        os.rename(name, newPath)
+
 if len(sys.argv) != 2:
     print_usage()
     sys.exit(1)
@@ -79,3 +90,4 @@ wav = paths[1]
 
 split_album(albumPath, cue, wav)
 tag_tracks(cue, albumPath)
+rename_tracks(albumPath)
