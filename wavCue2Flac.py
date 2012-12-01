@@ -3,13 +3,10 @@ import sys
 import shlex
 from subprocess import call
 
-# call cuetag
-# check for errors
-
 # programmatically rename by metadata (if possible)
 
 def find_command(name):
-    print('checking for %s' % name)
+    #print('checking for %s' % name)
     for dir in os.environ['PATH'].split(':'):
         command = os.path.join(dir, name)
         if os.path.exists(command): return command
@@ -28,14 +25,22 @@ def find_cue_wav(path):
                     if os.path.exists(wav):
                         return cue, wav
 
-def split_album(cue, wav):
+def split_album(path, cue, wav):
     print('splitting album with cuebreakpoints | shnsplit')
-    os.chdir(os.path.dirname(cue))
+    os.chdir(path)
     ret = call(
         'cuebreakpoints %s | shnsplit -q -o "flac flac -s --best -o %%f -" %s' % (shlex.quote(cue), shlex.quote(wav)),
         shell=True)
     if ret != 0:
         print('error calling cuebreakpoints/shnsplit', file=sys.stderr)
+        sys.exit(1)
+
+def tag_tracks(cue, path):
+    print('tagging tracks with cuetag')
+    os.chdir(path)
+    ret = call('cuetag %s split-track*.flac' % shlex.quote(cue), shell=True)
+    if ret != 0:
+        print('error calling cuetag', file=sys.stderr)
         sys.exit(1)
 
 if len(sys.argv) != 2:
@@ -72,4 +77,5 @@ if paths is None:
 cue = paths[0]
 wav = paths[1]
 
-split_album(cue, wav)
+split_album(albumPath, cue, wav)
+tag_tracks(cue, albumPath)
