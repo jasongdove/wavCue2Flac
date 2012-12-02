@@ -55,7 +55,7 @@ def rename_tracks(path):
         newPath = os.path.join(path, newName)
         os.rename(name, newPath)
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     print_usage()
     sys.exit(1)
 
