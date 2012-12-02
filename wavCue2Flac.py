@@ -1,4 +1,5 @@
 import os
+import pipes
 import sys
 import shlex
 import glob
@@ -29,18 +30,18 @@ def split_album(path, cue, wav):
     print('splitting album with cuebreakpoints | shnsplit')
     os.chdir(path)
     ret = call(
-        'cuebreakpoints %s | shnsplit -q -o "flac flac -s --best -o %%f -" %s' % (shlex.quote(cue), shlex.quote(wav)),
+        'cuebreakpoints %s | shnsplit -q -o "flac flac -s --best -o %%f -" %s' % (pipes.quote(cue), pipes.quote(wav)),
         shell=True)
     if ret != 0:
-        print('error calling cuebreakpoints/shnsplit', file=sys.stderr)
+        print >> sys.stderr, 'error calling cuebreakpoints/shnsplit'
         sys.exit(1)
 
 def tag_tracks(cue, path):
     print('tagging tracks with cuetag')
     os.chdir(path)
-    ret = call('cuetag %s split-track*.flac' % shlex.quote(cue), shell=True)
+    ret = call('cuetag %s split-track*.flac' % pipes.quote(cue), shell=True)
     if ret != 0:
-        print('error calling cuetag', file=sys.stderr)
+        print >> sys.stderr, 'error calling cuetag'
         sys.exit(1)
 
 def rename_tracks(path):
@@ -62,22 +63,22 @@ albumPath = sys.argv[1]
 
 flac = find_command('flac')
 if flac is None:
-    print('unable to find flac', file=sys.stderr)
+    print >> sys.stderr, 'unable to find flac'
     sys.exit(1)
 
 cuebreakpoints = find_command('cuebreakpoints')
 if cuebreakpoints is None:
-    print('unable to find cuebreakpoints (cuetools)', file=sys.stderr)
+    print >> sys.stderr, 'unable to find cuebreakpoints (cuetools)'
     sys.exit(1)
 
 shnsplit = find_command('shnsplit')
 if shnsplit is None:
-    print('unable to find shnsplit (shntool)', file=sys.stderr)
+    print >> sys.stderr, 'unable to find shnsplit (shntool)'
     sys.exit(1)
 
 cuetag = find_command('cuetag')
 if cuetag is None:
-    print('unable to find cuetag (download from https://github.com/gumayunov/split-cue/blob/master/cuetag)', file=sys.stderr)
+    print >> sys.stderr, 'unable to find cuetag (download from https://github.com/gumayunov/split-cue/blob/master/cuetag)'
     sys.exit(1)
 
 paths = find_cue_wav(albumPath)
